@@ -1,0 +1,19 @@
+{
+  "name": "synthwave-racer-3d",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Synthwave Racer 3D — a low-poly endless neon highway racer built with Three.js and the Web Audio API.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "prune-deployments": "node scripts/prune-deployments.mjs"
+  },
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "vite": "^6.4.6"
+  }
+}
