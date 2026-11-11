@@ -17,6 +17,7 @@ export class Input {
     this.handlers = {};
 
     window.addEventListener('keydown', (e) => {
+      if (e.target instanceof HTMLInputElement) return; // typing a driver name
       if ([...LEFT, ...RIGHT, ...BOOST, ...BRAKE].includes(e.code)) e.preventDefault();
       if (e.repeat) return;
       this.keys.add(e.code);

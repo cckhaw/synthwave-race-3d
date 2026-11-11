@@ -108,6 +108,173 @@ body {
   margin-left: 4px;
 }
 
+/* Race position, top centre. */
+.hud-position {
+  position: absolute;
+  left: 50%;
+  top: calc(12px + env(safe-area-inset-top));
+  transform: translateX(-50%);
+  font-size: clamp(30px, 6vw, 48px);
+  line-height: 1;
+  text-shadow: var(--outline);
+  white-space: nowrap;
+}
+
+.hud-position small {
+  margin-left: 6px;
+  font-size: 0.4em;
+  color: var(--yellow);
+}
+
+#position[data-place='1'] {
+  color: var(--yellow);
+}
+
+.speedometer {
+  position: absolute;
+  left: calc(20px + env(safe-area-inset-left));
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  width: clamp(120px, 15vw, 168px);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-style: normal;
+  filter: drop-shadow(0 5px 0 rgba(6, 38, 92, 0.55));
+}
+
+.speedometer svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* On touch layouts the bottom corners hold the steering buttons. */
+body.touch .speedometer {
+  width: 92px;
+  left: calc(14px + env(safe-area-inset-left));
+  bottom: calc(118px + env(safe-area-inset-bottom));
+}
+
+/* Floating "1st / 2nd / 3rd" markers above rival cars. */
+#tags {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.pos-tag {
+  position: absolute;
+  left: 0;
+  top: 0;
+  padding: 0 4px 12px;
+  font-size: 22px;
+  line-height: 1;
+  color: #fff;
+  text-shadow: var(--outline);
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.pos-tag::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  margin-left: -6px;
+  border: 6px solid transparent;
+  border-top: 9px solid #fff;
+  border-bottom: 0;
+  filter: drop-shadow(0 2px 0 var(--ink));
+}
+
+.pos-tag[data-place='1'] {
+  color: var(--yellow);
+}
+
+/* ---------- Leaderboard ---------- */
+.menu-panels {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.board {
+  min-width: 250px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(6, 38, 92, 0.6);
+  font: 700 13px/1.5 'Segoe UI', system-ui, sans-serif;
+  text-align: left;
+}
+
+.board-title {
+  margin-bottom: 4px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--yellow);
+  text-align: center;
+}
+
+.board-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.board-list li {
+  display: grid;
+  grid-template-columns: 1.4em 1fr 2.6em auto;
+  gap: 8px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.board-list li.mine {
+  background: rgba(255, 210, 63, 0.9);
+  color: var(--ink);
+}
+
+.lb-rank,
+.lb-place {
+  opacity: 0.75;
+}
+
+.lb-score {
+  text-align: right;
+  font-weight: 900;
+}
+
+.driver {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.driver input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font: 800 13px 'Segoe UI', system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.driver input:focus {
+  outline: 2px solid var(--yellow);
+}
+
 /* ---------- Buttons ---------- */
 .top-buttons {
   position: fixed;
@@ -425,6 +592,13 @@ body.touch .nitro-btn {
 @media (max-width: 560px) {
   .overlay {
     padding-top: 64px;
+    gap: 12px;
+  }
+  .help {
+    display: none;
+  }
+  .hud-position {
+    top: calc(70px + env(safe-area-inset-top));
   }
   .world-list {
     grid-template-columns: repeat(2, minmax(0, 150px));
