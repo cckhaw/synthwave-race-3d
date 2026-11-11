@@ -13,6 +13,7 @@ import { Sparks, SpeedLines } from './particles.js';
 import { Rivals } from './rivals.js';
 import { createSpeedometer } from './speedometer.js';
 import * as scores from './leaderboard.js';
+import * as globalBoard from './global.js';
 
 // ------------------------------------------------------------------ tuning
 const BASE_SPEED = 45; // world units / second
@@ -80,8 +81,7 @@ function setWorld(id) {
   scores.recoverUnfinishedRun(def.id);
   game.best = scores.worldBest(def.id);
   ui.best.textContent = fmt(game.best);
-  ui.boardTitle.textContent = `Top ${scores.MAX_ENTRIES} · ${def.name}`;
-  scores.renderBoard(ui.boardStart, def.id);
+  refreshBoard('start');
   for (const card of document.querySelectorAll('.world-card')) {
     const selected = card.dataset.world === def.id;
     card.classList.toggle('selected', selected);
@@ -132,10 +132,6 @@ const ui = {
   best: $('best'),
   position: $('position'),
   tags: $('tags'),
-  boardTitle: $('board-title'),
-  boardStart: $('board-start'),
-  boardOver: $('board-over'),
-  boardOverTitle: $('board-over-title'),
   finalPlace: $('final-place'),
   name: $('driver-name'),
   mult: $('multiplier'),
@@ -150,6 +146,56 @@ const ui = {
   btnMute: $('btn-mute'),
 };
 const fmt = (n) => Math.floor(n).toLocaleString('en-US');
+
+// ------------------------------------------------------------ leaderboards
+// Two panels (start screen, game-over screen) share one Global / This device
+// toggle. Global falls back to the device table when the API is unreachable.
+const boards = {
+  start: { title: $('board-title'), list: $('board-start'), note: $('board-note'), tabs: $('board-tabs') },
+  over: { title: $('board-over-title'), list: $('board-over'), note: $('board-over-note'), tabs: $('board-over-tabs') },
+};
+let boardMode = 'global'; // 'global' | 'device'
+const lastRun = { localRank: -1, global: null }; // result of the run just finished
+
+async function refreshBoard(which) {
+  const board = boards[which];
+  const world = worldId;
+  const isOver = which === 'over';
+  board.title.textContent = `Top ${scores.MAX_ENTRIES} · ${WORLDS.find((w) => w.id === world).name}`;
+  for (const tab of board.tabs.children) {
+    const selected = tab.dataset.mode === boardMode;
+    tab.classList.toggle('selected', selected);
+    tab.setAttribute('aria-pressed', String(selected));
+  }
+  const showDevice = (note) => {
+    scores.renderBoard(board.list, scores.getBoard(world), isOver ? lastRun.localRank : -1);
+    board.note.textContent = note;
+  };
+  if (boardMode === 'device') return showDevice('Scores set on this device');
+
+  if (isOver && lastRun.global) {
+    const { rank, entries } = lastRun.global;
+    scores.renderBoard(board.list, entries, rank ? rank - 1 : -1);
+    board.note.textContent = rank ? `Your global rank: #${rank}` : 'All players, worldwide';
+    return;
+  }
+  board.note.textContent = 'Loading global scores…';
+  const entries = await globalBoard.fetchTop(world);
+  if (world !== worldId || boardMode !== 'global' || (isOver && lastRun.global)) return; // superseded
+  if (!entries) return showDevice('Global board unavailable — showing this device');
+  scores.renderBoard(board.list, entries);
+  board.note.textContent = 'All players, worldwide';
+}
+
+for (const which of Object.keys(boards)) {
+  boards[which].tabs.addEventListener('click', (e) => {
+    const mode = e.target.dataset?.mode;
+    if (!mode) return;
+    boardMode = mode;
+    e.target.blur();
+    refreshBoard(which);
+  });
+}
 
 const speedometer = createSpeedometer($('speedometer'));
 const rivals = new Rivals(scene, ui.tags);
@@ -215,6 +261,7 @@ function startGame() {
   player.rotation.set(0, 0, 0);
   rivals.reset();
   scores.setName(ui.name.value);
+  globalBoard.beginRun(worldId);
   ui.name.blur();
 
   ui.start.classList.add('hidden');
@@ -259,7 +306,7 @@ function showMenu() {
   game.state = 'menu';
   player.visible = true;
   rivals.hide();
-  scores.renderBoard(ui.boardStart, worldId);
+  refreshBoard('start');
   ui.over.classList.add('hidden');
   ui.hud.classList.add('hidden');
   ui.start.classList.remove('hidden');
@@ -267,15 +314,23 @@ function showMenu() {
 
 function showGameOver() {
   game.state = 'over';
-  const { rank } = scores.addScore(worldId, { name: scores.getName(), score: game.score, place: game.position });
+  const result = { name: scores.getName(), score: game.score, place: game.position };
+  const world = worldId;
+  const { rank } = scores.addScore(world, result);
+  lastRun.localRank = rank;
+  lastRun.global = null;
+  globalBoard.submit(world, result).then((submitted) => {
+    if (!submitted || world !== worldId || game.state !== 'over') return;
+    lastRun.global = submitted;
+    refreshBoard('over');
+  });
   scores.clearRunInProgress(worldId);
   game.best = scores.worldBest(worldId);
   ui.finalScore.textContent = fmt(game.score);
   ui.finalPlace.textContent = `Finished ${scores.ordinal(game.position)} of ${rivals.total}`;
   ui.best.textContent = fmt(game.best);
   ui.newBest.classList.toggle('hidden', rank !== 0);
-  ui.boardOverTitle.textContent = `Top ${scores.MAX_ENTRIES} · ${WORLDS.find((w) => w.id === worldId).name}`;
-  scores.renderBoard(ui.boardOver, worldId, rank);
+  refreshBoard('over');
   ui.over.classList.remove('hidden');
   ui.touch.classList.add('hidden');
   ui.boost.classList.add('hidden');

@@ -85,16 +85,15 @@ export function migrateLegacyBest(firstWorld) {
 const ORDINALS = ['1st', '2nd', '3rd', '4th'];
 export const ordinal = (n) => ORDINALS[n - 1] ?? `${n}th`;
 
-/** Render a board into an <ol>, padding with empty rows. */
-export function renderBoard(list, world, highlight = -1) {
-  const board = getBoard(world);
+/** Render entries ({ name, score, place }) into an <ol>, padding with empty rows. */
+export function renderBoard(list, board, highlight = -1) {
   list.replaceChildren();
   for (let i = 0; i < MAX_ENTRIES; i++) {
     const entry = board[i];
     const row = document.createElement('li');
     if (i === highlight) row.className = 'mine';
     const cells = entry
-      ? [i + 1, entry.name, entry.place ? ordinal(entry.place) : '', entry.score.toLocaleString('en-US')]
+      ? [i + 1, cleanName(entry.name), entry.place ? ordinal(entry.place) : '', Math.floor(entry.score).toLocaleString('en-US')]
       : [i + 1, '—', '', ''];
     for (const [k, text] of cells.entries()) {
       const cell = document.createElement('span');

@@ -62,7 +62,11 @@
       <div class="menu-panels">
         <div class="board">
           <div id="board-title" class="board-title">Top 5</div>
+          <div id="board-tabs" class="board-tabs" role="group" aria-label="Leaderboard scope">
+            <button data-mode="global">Global</button><button data-mode="device">This device</button>
+          </div>
           <ol id="board-start" class="board-list"></ol>
+          <div id="board-note" class="board-note"></div>
           <label class="driver">Driver <input id="driver-name" type="text" maxlength="10" autocomplete="off" spellcheck="false" /></label>
         </div>
         <ul class="help">
@@ -86,12 +90,16 @@
       <div class="final">
         <div class="hud-label">Score</div>
         <div id="final-score" class="final-score">0</div>
-        <div id="new-best" class="new-best hidden">New high score!</div>
+        <div id="new-best" class="new-best hidden">New personal best!</div>
         <div id="final-place" class="best-line">Finished 4th of 4</div>
       </div>
       <div class="board">
         <div id="board-over-title" class="board-title">Top 5</div>
+        <div id="board-over-tabs" class="board-tabs" role="group" aria-label="Leaderboard scope">
+          <button data-mode="global">Global</button><button data-mode="device">This device</button>
+        </div>
         <ol id="board-over" class="board-list"></ol>
+        <div id="board-over-note" class="board-note"></div>
       </div>
       <button id="btn-restart" class="neon-btn">Race Again</button>
       <button id="btn-worlds" class="link-btn">Change World</button>
