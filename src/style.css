@@ -339,6 +339,98 @@ body.touch .nitro-btn {
   box-shadow: 0 2px 0 var(--ink);
 }
 
+.world-list {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 132px));
+  gap: 10px;
+  width: min(100%, 570px);
+  justify-content: center;
+}
+
+.world-card {
+  padding: 0;
+  border: 3px solid rgba(255, 255, 255, 0.7);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--ink);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--ink);
+  transition: transform 0.12s, border-color 0.12s;
+  opacity: 0.82;
+}
+
+.world-card:hover {
+  opacity: 1;
+}
+
+.world-card.selected {
+  opacity: 1;
+  border-color: var(--yellow);
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 6px 0 var(--ink), 0 0 0 3px rgba(255, 210, 63, 0.45);
+}
+
+/* Miniature scene: sky, ground, a road in perspective and the car. */
+.world-thumb {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 10;
+  background: linear-gradient(180deg, var(--sky) 0%, var(--horizon) 48%, var(--ground) 48.5%, var(--ground) 100%);
+}
+
+.world-thumb::before {
+  content: '';
+  position: absolute;
+  inset: 48% 0 0 0;
+  background: var(--road);
+  clip-path: polygon(47% 0, 53% 0, 82% 100%, 18% 100%);
+}
+
+.world-thumb::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 9%;
+  width: 20%;
+  height: 17%;
+  margin-left: -10%;
+  border-radius: 30% 30% 18% 18%;
+  background: var(--car);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.world-name {
+  display: block;
+  padding: 5px 2px 6px;
+  font: 800 11px 'Segoe UI', system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.link-btn {
+  padding: 8px 18px;
+  border: 3px solid #fff;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #3aa0ff, var(--blue));
+  color: #fff;
+  font: italic 900 13px var(--font);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 0 var(--ink);
+  cursor: pointer;
+}
+
+@media (max-width: 560px) {
+  .overlay {
+    padding-top: 64px;
+  }
+  .world-list {
+    grid-template-columns: repeat(2, minmax(0, 150px));
+  }
+}
+
 .best-line {
   font-size: 13px;
   font-weight: 900;

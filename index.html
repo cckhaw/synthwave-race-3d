@@ -54,11 +54,12 @@
 
     <div id="overlay-start" class="overlay">
       <h1 class="title"><span>Synthwave</span><em>Racer 3D</em></h1>
-      <p class="tagline">Endless sky-track racing. Don't crash.</p>
+      <p class="tagline">Pick a world. Don't crash.</p>
+      <div id="world-list" class="world-list" role="group" aria-label="Choose a world"></div>
       <button id="btn-start" class="neon-btn">Start Engine</button>
       <div class="best-line">High score <span id="best-start">0</span></div>
       <ul class="help">
-        <li><b>← → / A D</b> steer</li>
+        <li><b>← → / 1–4</b> choose world · then steer</li>
         <li><b>↑ / W / Space</b> nitro</li>
         <li><b>↓ / S</b> brake</li>
         <li><b>P</b> pause · <b>M</b> mute</li>
@@ -80,6 +81,7 @@
         <div class="best-line">High score <span id="best-over">0</span></div>
       </div>
       <button id="btn-restart" class="neon-btn">Race Again</button>
+      <button id="btn-worlds" class="link-btn">Change World</button>
     </div>
 
     <script type="module" src="/src/main.js"></script>

@@ -7,7 +7,7 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import './style.css';
 import { AudioEngine } from './audio.js';
 import { Input } from './input.js';
-import { createWorld, LANES, ROAD_HALF_WIDTH } from './world.js';
+import { createWorld, LANES, ROAD_HALF_WIDTH, WORLDS } from './world.js';
 import { makeCar, makeTruck, makeNitro } from './vehicles.js';
 import { Sparks, SpeedLines } from './particles.js';
 
@@ -24,6 +24,7 @@ const BOOST_MIN = 0.3;
 const FOV_NORMAL = 64;
 const FOV_BOOST = 96;
 const STORAGE_KEY = 'synthwave-racer-3d:best';
+const WORLD_KEY = 'synthwave-racer-3d:world';
 const TRAFFIC = [
   [0x1fbf4a, 0xffffff],
   [0x12b5c9, 0xffd23f],
@@ -47,12 +48,46 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, coarse ? 1.5 : 2));
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(FOV_NORMAL, 1, 0.5, 2600);
 
-const world = createWorld(scene, renderer);
 const sparks = new Sparks(scene);
 const speedLines = new SpeedLines(scene);
 
-const player = makeCar(0xff1f8f, { wing: true, accent: 0x1b1b1f, nitro: true });
-scene.add(player);
+// The world and the player's car are rebuilt whenever a world is picked.
+let world = null;
+let player = null;
+let worldId = null;
+
+function setWorld(id) {
+  const def = WORLDS.find((w) => w.id === id) || WORLDS[0];
+  if (def.id === worldId) return;
+  worldId = def.id;
+  world?.dispose();
+  world = createWorld(scene, renderer, def.id);
+
+  const x = player ? player.position.x : LANES[1];
+  if (player) scene.remove(player);
+  player = makeCar(def.car, { wing: true, accent: def.accent, nitro: true, blueLamps: !!def.blueLamps });
+  player.position.x = x;
+  scene.add(player);
+
+  try {
+    localStorage.setItem(WORLD_KEY, def.id);
+  } catch {
+    /* storage unavailable */
+  }
+  for (const card of document.querySelectorAll('.world-card')) {
+    const selected = card.dataset.world === def.id;
+    card.classList.toggle('selected', selected);
+    card.setAttribute('aria-pressed', String(selected));
+  }
+}
+
+function savedWorld() {
+  try {
+    return localStorage.getItem(WORLD_KEY);
+  } catch {
+    return null;
+  }
+}
 
 const composer = new EffectComposer(
   renderer,
@@ -219,6 +254,16 @@ function crash(obstacle) {
   saveBest(game.best);
 }
 
+function showMenu() {
+  if (game.state !== 'over') return;
+  clearEntities();
+  game.state = 'menu';
+  player.visible = true;
+  ui.over.classList.add('hidden');
+  ui.hud.classList.add('hidden');
+  ui.start.classList.remove('hidden');
+}
+
 function showGameOver() {
   game.state = 'over';
   ui.finalScore.textContent = fmt(game.score);
@@ -369,7 +414,7 @@ function updatePlaying(dt) {
 
   // --- exhaust trail ---
   game.exhaustTimer -= dt;
-  if (game.exhaustTimer <= 0) {
+  if (game.exhaustTimer <= 0 && game.boosting) {
     game.exhaustTimer = game.boosting ? 0.008 : 0.05;
     const color = game.boosting ? (Math.random() < 0.3 ? exhaustHot : exhaustBoost) : exhaustNormal;
     for (const side of [-0.42, 0.42]) {
@@ -513,5 +558,31 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
+// World picker cards on the start screen.
+const worldList = $('world-list');
+for (const [i, def] of WORLDS.entries()) {
+  const card = document.createElement('button');
+  card.className = 'world-card';
+  card.dataset.world = def.id;
+  for (const [key, value] of Object.entries(def.thumb)) card.style.setProperty(`--${key}`, value);
+  card.style.setProperty('--car', `#${def.car.toString(16).padStart(6, '0')}`);
+  card.innerHTML = `<span class="world-thumb"></span><span class="world-name">${i + 1}. ${def.name}</span>`;
+  card.addEventListener('click', () => {
+    setWorld(def.id);
+    card.blur();
+  });
+  worldList.appendChild(card);
+}
+setWorld(savedWorld());
+$('btn-worlds').addEventListener('click', showMenu);
+
+window.addEventListener('keydown', (e) => {
+  if (game.state !== 'menu') return;
+  const index = WORLDS.findIndex((w) => w.id === worldId);
+  if (e.code === 'ArrowLeft' || e.code === 'KeyA') setWorld(WORLDS[(index + WORLDS.length - 1) % WORLDS.length].id);
+  else if (e.code === 'ArrowRight' || e.code === 'KeyD') setWorld(WORLDS[(index + 1) % WORLDS.length].id);
+  else if (/^Digit[1-9]$/.test(e.code) && WORLDS[e.code.slice(5) - 1]) setWorld(WORLDS[e.code.slice(5) - 1].id);
+});
+
 // Small debugging / automation hook.
-window.__synthwave = { game, obstacles };
+window.__synthwave = { game, obstacles, setWorld };
