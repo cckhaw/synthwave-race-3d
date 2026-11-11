@@ -1,16 +1,36 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <defs>
-    <linearGradient id="s" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffe45e"/>
-      <stop offset="1" stop-color="#ff2d95"/>
-    </linearGradient>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <clipPath id="tile"><rect width="512" height="512" rx="112"/></clipPath>
+  <g clip-path="url(#tile)"><defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0e63d6"/><stop offset="0.55" stop-color="#7cc6fb"/><stop offset="1" stop-color="#d6f0ff"/></linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#19b6d4"/><stop offset="1" stop-color="#0b7fa6"/></linearGradient>
+    <linearGradient id="car" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5fb0"/><stop offset="1" stop-color="#e3107a"/></linearGradient>
+    <linearGradient id="flame" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8fbff"/><stop offset="0.35" stop-color="#3fc8ff"/><stop offset="1" stop-color="#1668ff" stop-opacity="0"/></linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#ffffff"/><stop offset="0.45" stop-color="#fff3b0"/><stop offset="1" stop-color="#fff3b0" stop-opacity="0"/></radialGradient>
+    <clipPath id="road"><polygon points="232,236 280,236 560,512 -48,512"/></clipPath>
   </defs>
-  <rect width="64" height="64" rx="12" fill="#12032b"/>
-  <circle cx="32" cy="30" r="18" fill="url(#s)"/>
-  <g fill="#12032b">
-    <rect x="10" y="32" width="44" height="2"/>
-    <rect x="10" y="37" width="44" height="3"/>
-    <rect x="10" y="43" width="44" height="4"/>
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <circle cx="118" cy="104" r="92" fill="url(#sun)"/>
+  <g fill="#ffffff" opacity="0.95"><ellipse cx="372" cy="96" rx="62" ry="20"/><ellipse cx="410" cy="82" rx="40" ry="18"/><ellipse cx="338" cy="84" rx="34" ry="15"/></g>
+  <polygon points="330,236 392,176 452,236" fill="#e2c285"/><polygon points="364,203 392,176 420,203" fill="#58b04a"/>
+  <rect y="236" width="512" height="276" fill="url(#sea)"/>
+  <g clip-path="url(#road)">
+    <rect x="-48" y="236" width="608" height="276" fill="#ff8f17"/>
+    <polygon points="244,236 256,236 256,512 100,512" fill="#ffb52e"/>
+    <polygon points="268,236 280,236 560,512 412,512" fill="#ffb52e"/>
+    <polygon points="232,236 238,236 -10,512 -48,512" fill="#ffffff"/>
+    <polygon points="274,236 280,236 560,512 522,512" fill="#ffffff"/>
   </g>
-  <path d="M4 52h56M32 52L8 64M32 52l24 12M32 52v12" stroke="#00f0ff" stroke-width="2" fill="none"/>
+  <polygon points="232,236 226,236 -92,512 -48,512" fill="#e3211c"/><polygon points="280,236 286,236 604,512 560,512" fill="#e3211c"/>
+  
+  <ellipse cx="256" cy="418" rx="132" ry="20" fill="#000" opacity="0.28"/>
+  <polygon points="214,420 240,420 228,512 196,512" fill="url(#flame)"/><polygon points="272,420 298,420 316,512 284,512" fill="url(#flame)"/>
+  <rect x="150" y="296" width="212" height="14" rx="5" fill="#1b1b1f"/><rect x="180" y="306" width="10" height="22" fill="#1b1b1f"/><rect x="322" y="306" width="10" height="22" fill="#1b1b1f"/>
+  <path d="M196 322 L212 286 H300 L316 322 Z" fill="#101827"/>
+  <rect x="134" y="368" width="34" height="50" rx="10" fill="#0c0c0e"/><rect x="344" y="368" width="34" height="50" rx="10" fill="#0c0c0e"/>
+  <rect x="146" y="320" width="220" height="88" rx="22" fill="url(#car)"/>
+  <rect x="146" y="320" width="220" height="22" rx="11" fill="#ff8cc8" opacity="0.7"/>
+  <rect x="172" y="396" width="168" height="20" rx="6" fill="#15171c"/>
+  <circle cx="190" cy="366" r="19" fill="#9ff2ff"/><circle cx="322" cy="366" r="19" fill="#9ff2ff"/><rect x="204" y="360" width="104" height="12" rx="6" fill="#9ff2ff"/>
+  <circle cx="190" cy="366" r="9" fill="#ffffff"/><circle cx="322" cy="366" r="9" fill="#ffffff"/>
+  <circle cx="227" cy="408" r="9" fill="#dfe6ee"/><circle cx="285" cy="408" r="9" fill="#dfe6ee"/></g>
 </svg>

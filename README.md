@@ -23,6 +23,9 @@ An endless arcade sky-track racer built with [Three.js](https://threejs.org/), V
 - Traffic that always leaves a reachable gap, speed-based score multiplier
 - Procedural synth music, engine hum, boost, pickup and crash sounds
 
+The game can be added to a phone's home screen (web app manifest, maskable and Apple touch
+icons) and then opens full screen.
+
 ## Controls
 
 | Action | Keyboard | Touch |
