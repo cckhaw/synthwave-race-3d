@@ -13,11 +13,14 @@ An endless arcade sky-track racer built with [Three.js](https://threejs.org/), V
   with fences, trees and a start gantry)
 - The road ramps and sweeps left/right (vertex-shader bend), tuned per world
 - Glossy cars with environment reflections, blue nitro flames, wind streaks and crash debris
+- Three AI rivals that race you and dodge traffic, with floating position tags and a
+  race-position readout; finishing higher multiplies your score (rival contact is a nudge, not a wreck)
+- Analogue speedometer dial with a digital readout
+- Top-5 leaderboard per world with driver names, stored in `localStorage` on the device
 - Continuous steering (keyboard / on-screen buttons) and swipe lane switching
 - Nitro boost with FOV expansion, x2 score and a NOS meter refilled by canister pickups
 - Traffic that always leaves a reachable gap, speed-based score multiplier
 - Procedural synth music, engine hum, boost, pickup and crash sounds
-- High score persisted in `localStorage`
 
 ## Controls
 

@@ -25,8 +25,10 @@
       </div>
       <div class="hud-right">
         <div id="multiplier" class="hud-mult">x1.0</div>
-        <div class="hud-speed"><span id="speed">0</span><small>km/h</small></div>
       </div>
+      <div class="hud-position"><span id="position">4th</span><small>/ 4</small></div>
+      <div id="speedometer" class="speedometer"></div>
+      <div id="tags"></div>
     </div>
 
     <div class="top-buttons">
@@ -57,14 +59,21 @@
       <p class="tagline">Pick a world. Don't crash.</p>
       <div id="world-list" class="world-list" role="group" aria-label="Choose a world"></div>
       <button id="btn-start" class="neon-btn">Start Engine</button>
-      <div class="best-line">High score <span id="best-start">0</span></div>
-      <ul class="help">
+      <div class="menu-panels">
+        <div class="board">
+          <div id="board-title" class="board-title">Top 5</div>
+          <ol id="board-start" class="board-list"></ol>
+          <label class="driver">Driver <input id="driver-name" type="text" maxlength="10" autocomplete="off" spellcheck="false" /></label>
+        </div>
+        <ul class="help">
         <li><b>← → / 1–4</b> choose world · then steer</li>
         <li><b>↑ / W / Space</b> nitro</li>
         <li><b>↓ / S</b> brake</li>
         <li><b>P</b> pause · <b>M</b> mute</li>
         <li class="touch-only"><b>Swipe</b> to change lane, <b>swipe up</b> for nitro</li>
+        <li>Finish higher for a bigger score bonus</li>
       </ul>
+      </div>
     </div>
 
     <div id="overlay-pause" class="overlay hidden">
@@ -78,7 +87,11 @@
         <div class="hud-label">Score</div>
         <div id="final-score" class="final-score">0</div>
         <div id="new-best" class="new-best hidden">New high score!</div>
-        <div class="best-line">High score <span id="best-over">0</span></div>
+        <div id="final-place" class="best-line">Finished 4th of 4</div>
+      </div>
+      <div class="board">
+        <div id="board-over-title" class="board-title">Top 5</div>
+        <ol id="board-over" class="board-list"></ol>
       </div>
       <button id="btn-restart" class="neon-btn">Race Again</button>
       <button id="btn-worlds" class="link-btn">Change World</button>

@@ -10,6 +10,9 @@ import { Input } from './input.js';
 import { createWorld, LANES, ROAD_HALF_WIDTH, WORLDS } from './world.js';
 import { makeCar, makeTruck, makeNitro } from './vehicles.js';
 import { Sparks, SpeedLines } from './particles.js';
+import { Rivals } from './rivals.js';
+import { createSpeedometer } from './speedometer.js';
+import * as scores from './leaderboard.js';
 
 // ------------------------------------------------------------------ tuning
 const BASE_SPEED = 45; // world units / second
@@ -23,7 +26,7 @@ const BOOST_REGEN = 1 / 10;
 const BOOST_MIN = 0.3;
 const FOV_NORMAL = 64;
 const FOV_BOOST = 96;
-const STORAGE_KEY = 'synthwave-racer-3d:best';
+const POSITION_BONUS = [1.5, 1.25, 1.1, 1]; // score multiplier for 1st..4th
 const WORLD_KEY = 'synthwave-racer-3d:world';
 const TRAFFIC = [
   [0x1fbf4a, 0xffffff],
@@ -74,6 +77,11 @@ function setWorld(id) {
   } catch {
     /* storage unavailable */
   }
+  scores.recoverUnfinishedRun(def.id);
+  game.best = scores.worldBest(def.id);
+  ui.best.textContent = fmt(game.best);
+  ui.boardTitle.textContent = `Top ${scores.MAX_ENTRIES} · ${def.name}`;
+  scores.renderBoard(ui.boardStart, def.id);
   for (const card of document.querySelectorAll('.world-card')) {
     const selected = card.dataset.world === def.id;
     card.classList.toggle('selected', selected);
@@ -122,7 +130,14 @@ const ui = {
   hud: $('hud'),
   score: $('score'),
   best: $('best'),
-  speed: $('speed'),
+  position: $('position'),
+  tags: $('tags'),
+  boardTitle: $('board-title'),
+  boardStart: $('board-start'),
+  boardOver: $('board-over'),
+  boardOverTitle: $('board-over-title'),
+  finalPlace: $('final-place'),
+  name: $('driver-name'),
   mult: $('multiplier'),
   boost: $('btn-boost'),
   start: $('overlay-start'),
@@ -130,28 +145,14 @@ const ui = {
   over: $('overlay-over'),
   finalScore: $('final-score'),
   newBest: $('new-best'),
-  bestStart: $('best-start'),
-  bestOver: $('best-over'),
   touch: $('touch-controls'),
   btnPause: $('btn-pause'),
   btnMute: $('btn-mute'),
 };
 const fmt = (n) => Math.floor(n).toLocaleString('en-US');
 
-function loadBest() {
-  try {
-    return Number(localStorage.getItem(STORAGE_KEY)) || 0;
-  } catch {
-    return 0;
-  }
-}
-function saveBest(value) {
-  try {
-    localStorage.setItem(STORAGE_KEY, String(Math.floor(value)));
-  } catch {
-    /* storage unavailable (private mode) — keep the in-memory value */
-  }
-}
+const speedometer = createSpeedometer($('speedometer'));
+const rivals = new Rivals(scene, ui.tags);
 
 // ------------------------------------------------------------------- state
 const game = {
@@ -159,8 +160,8 @@ const game = {
   time: 0,
   speed: 28,
   score: 0,
-  best: loadBest(),
-  bestAtStart: 0,
+  best: 0,
+  position: 4,
   bestSaveTimer: 0,
   energy: 0.5,
   boosting: false,
@@ -178,8 +179,6 @@ const obstacles = [];
 const pickups = [];
 let useTouchUi = coarse;
 document.body.classList.toggle('touch', coarse);
-
-ui.best.textContent = ui.bestStart.textContent = fmt(game.best);
 
 function clearEntities() {
   for (const o of obstacles) scene.remove(o);
@@ -201,7 +200,7 @@ function startGame() {
     time: 0,
     speed: 30,
     score: 0,
-    bestAtStart: game.best,
+    position: rivals.total,
     energy: 0.5,
     boosting: false,
     targetX: LANES[1],
@@ -214,6 +213,9 @@ function startGame() {
   player.visible = true;
   player.position.set(LANES[1], 0, 0);
   player.rotation.set(0, 0, 0);
+  rivals.reset();
+  scores.setName(ui.name.value);
+  ui.name.blur();
 
   ui.start.classList.add('hidden');
   ui.over.classList.add('hidden');
@@ -249,9 +251,6 @@ function crash(obstacle) {
   sparks.burst(player.position.x, 0.6, -1, palette, 260);
   sparks.burst(obstacle.position.x, 0.8, obstacle.position.z + obstacle.userData.half.l, palette, 80);
   if (navigator.vibrate) navigator.vibrate(180);
-
-  if (game.score > game.best) game.best = game.score;
-  saveBest(game.best);
 }
 
 function showMenu() {
@@ -259,6 +258,8 @@ function showMenu() {
   clearEntities();
   game.state = 'menu';
   player.visible = true;
+  rivals.hide();
+  scores.renderBoard(ui.boardStart, worldId);
   ui.over.classList.add('hidden');
   ui.hud.classList.add('hidden');
   ui.start.classList.remove('hidden');
@@ -266,9 +267,15 @@ function showMenu() {
 
 function showGameOver() {
   game.state = 'over';
+  const { rank } = scores.addScore(worldId, { name: scores.getName(), score: game.score, place: game.position });
+  scores.clearRunInProgress(worldId);
+  game.best = scores.worldBest(worldId);
   ui.finalScore.textContent = fmt(game.score);
-  ui.bestOver.textContent = ui.bestStart.textContent = ui.best.textContent = fmt(game.best);
-  ui.newBest.classList.toggle('hidden', !(game.score > game.bestAtStart && game.score > 0));
+  ui.finalPlace.textContent = `Finished ${scores.ordinal(game.position)} of ${rivals.total}`;
+  ui.best.textContent = fmt(game.best);
+  ui.newBest.classList.toggle('hidden', rank !== 0);
+  ui.boardOverTitle.textContent = `Top ${scores.MAX_ENTRIES} · ${WORLDS.find((w) => w.id === worldId).name}`;
+  scores.renderBoard(ui.boardOver, worldId, rank);
   ui.over.classList.remove('hidden');
   ui.touch.classList.add('hidden');
   ui.boost.classList.add('hidden');
@@ -365,14 +372,23 @@ function updatePlaying(dt) {
   // --- score ---
   const mult = currentMultiplier();
   game.score += game.speed * dt * 0.12 * mult;
-  if (game.score > game.best) {
-    game.best = game.score;
-    game.bestSaveTimer += dt;
-    if (game.bestSaveTimer > 1) {
-      game.bestSaveTimer = 0;
-      saveBest(game.best); // persist continuously, not just on game over
-    }
+  if (game.score > game.best) game.best = game.score;
+  game.bestSaveTimer += dt;
+  if (game.bestSaveTimer > 1) {
+    game.bestSaveTimer = 0;
+    scores.saveRunInProgress(worldId, game.score); // persist continuously, not just on game over
   }
+
+  // --- rivals ---
+  rivals.update(dt, {
+    cruise,
+    playerSpeed: game.speed,
+    playerX: player.position.x,
+    trafficSpeed: TRAFFIC_SPEED,
+    obstacles,
+    playerSolid: true,
+  });
+  game.position = rivals.playerPosition();
 
   // --- traffic ---
   game.spawnDist += (game.speed - TRAFFIC_SPEED) * dt;
@@ -436,12 +452,20 @@ function updatePlaying(dt) {
 
 function currentMultiplier() {
   const fromSpeed = 1 + Math.max(0, game.speed - BASE_SPEED) / 40;
-  return fromSpeed * (game.boosting ? 2 : 1);
+  return fromSpeed * (game.boosting ? 2 : 1) * POSITION_BONUS[game.position - 1];
 }
 
 function updateCrashed(dt) {
   game.speed = damp(game.speed, 0, 4, dt);
   for (const o of obstacles) o.position.z += (game.speed - TRAFFIC_SPEED) * dt; // traffic drives on
+  rivals.update(dt, {
+    cruise: BASE_SPEED + Math.min(game.time, MAX_EXTRA_SPEED),
+    playerSpeed: game.speed,
+    playerX: player.position.x,
+    trafficSpeed: TRAFFIC_SPEED,
+    obstacles,
+    playerSolid: false,
+  });
   game.crashTimer -= dt;
   if (game.crashTimer <= 0 && game.state === 'crashed') showGameOver();
 }
@@ -473,12 +497,13 @@ function updateCamera(dt, t) {
 let hudCache = '';
 function updateHud() {
   const mult = currentMultiplier();
-  const key = `${Math.floor(game.score)}|${Math.round(game.speed * 3)}|${mult.toFixed(1)}|${Math.round(game.energy * 100)}|${game.boosting}`;
+  const key = `${Math.floor(game.score)}|${game.position}|${mult.toFixed(1)}|${Math.round(game.energy * 100)}|${game.boosting}`;
   if (key === hudCache) return;
   hudCache = key;
   ui.score.textContent = fmt(game.score);
   ui.best.textContent = fmt(game.best);
-  ui.speed.textContent = Math.round(game.speed * 3);
+  ui.position.textContent = scores.ordinal(game.position);
+  ui.position.dataset.place = game.position;
   ui.mult.textContent = `x${mult.toFixed(1)}`;
   ui.mult.classList.toggle('boosting', game.boosting);
   ui.boost.style.setProperty('--energy', Math.round(game.energy * 100));
@@ -510,7 +535,12 @@ function frame(now) {
   speedLines.update(dt, game.speed, game.boostBlend);
   sparks.update(dt);
   updateCamera(dt, now / 1000);
-  if (game.state === 'playing' || game.state === 'crashed') updateHud();
+  if (game.state === 'playing' || game.state === 'crashed') {
+    updateHud();
+    speedometer.set(game.speed * 3, dt);
+  }
+  camera.updateMatrixWorld();
+  rivals.updateTags(camera, window.innerWidth, window.innerHeight, game.state === 'playing');
   composer.render();
 }
 requestAnimationFrame(frame);
@@ -573,11 +603,17 @@ for (const [i, def] of WORLDS.entries()) {
   });
   worldList.appendChild(card);
 }
+scores.migrateLegacyBest(WORLDS[0].id);
+ui.name.value = scores.getName();
+ui.name.addEventListener('change', () => {
+  scores.setName(ui.name.value);
+  ui.name.value = scores.getName();
+});
 setWorld(savedWorld());
 $('btn-worlds').addEventListener('click', showMenu);
 
 window.addEventListener('keydown', (e) => {
-  if (game.state !== 'menu') return;
+  if (game.state !== 'menu' || e.target instanceof HTMLInputElement) return;
   const index = WORLDS.findIndex((w) => w.id === worldId);
   if (e.code === 'ArrowLeft' || e.code === 'KeyA') setWorld(WORLDS[(index + WORLDS.length - 1) % WORLDS.length].id);
   else if (e.code === 'ArrowRight' || e.code === 'KeyD') setWorld(WORLDS[(index + 1) % WORLDS.length].id);
@@ -585,4 +621,4 @@ window.addEventListener('keydown', (e) => {
 });
 
 // Small debugging / automation hook.
-window.__synthwave = { game, obstacles, setWorld };
+window.__synthwave = { game, obstacles, setWorld, rivals };
