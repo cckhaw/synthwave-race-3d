@@ -43,7 +43,7 @@ const rimMat = bendable(new THREE.MeshStandardMaterial({ color: 0xcfd6e0, metaln
 const chromeMat = bendable(new THREE.MeshStandardMaterial({ color: 0xdfe6ee, metalness: 1, roughness: 0.15 }));
 // Colours above 1.0 are picked up by the bloom pass.
 const blueLightMat = bendable(new THREE.MeshBasicMaterial({ color: new THREE.Color(0.25, 0.95, 2.2) }));
-const redLightMat = bendable(new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 0.25, 0.2) }));
+const redLightMat = bendable(new THREE.MeshBasicMaterial({ color: new THREE.Color(1.35, 0.08, 0.06) }));
 const shadowMat = bendable(
   new THREE.MeshBasicMaterial({
     map: SHADOW_TEXTURE,
@@ -198,7 +198,7 @@ function finish(group) {
 }
 
 // ------------------------------------------------------------------- models
-export function makeCar(color, { wing = false, accent = 0xffffff, nitro = false } = {}) {
+export function makeCar(color, { wing = false, accent = 0xffffff, nitro = false, blueLamps = false } = {}) {
   const car = new THREE.Group();
 
   car.add(new THREE.Mesh(carBodyGeo, paint(color)));
@@ -211,10 +211,10 @@ export function makeCar(color, { wing = false, accent = 0xffffff, nitro = false 
 
   // Rear fascia: round lamps, light bars, diffuser and twin exhausts.
   for (const side of [-1, 1]) {
-    const lamp = new THREE.Mesh(roundLightGeo, nitro ? blueLightMat : redLightMat);
+    const lamp = new THREE.Mesh(roundLightGeo, blueLamps ? blueLightMat : redLightMat);
     lamp.position.set(side * 0.62, 0.66, 2.2);
     car.add(lamp);
-    const bar = new THREE.Mesh(lightBarGeo, nitro ? blueLightMat : redLightMat);
+    const bar = new THREE.Mesh(lightBarGeo, blueLamps ? blueLightMat : redLightMat);
     bar.position.set(side * 0.2, 0.66, 2.19);
     car.add(bar);
     const pipe = new THREE.Mesh(exhaustGeo, chromeMat);

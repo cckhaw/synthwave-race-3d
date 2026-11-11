@@ -6,8 +6,12 @@ An endless arcade sky-track racer built with [Three.js](https://threejs.org/), V
 
 ## Features
 
-- Daylight stunt track above the ocean: striped ramp, red/white barriers, arches, islands and clouds
-- The track ramps and sweeps left/right (vertex-shader bend) for a rollercoaster feel
+- Four selectable worlds, each with its own scenery, road, lighting and car colour:
+  **Sky Stunt** (striped ramp above the ocean), **Country Road** (overcast two-lane
+  blacktop with hedgerows and power lines), **Alpine Snow** (snowy mountain highway
+  with pines, guard rails and falling snow) and **Sunset Circuit** (kerbed race track
+  with fences, trees and a start gantry)
+- The road ramps and sweeps left/right (vertex-shader bend), tuned per world
 - Glossy cars with environment reflections, blue nitro flames, wind streaks and crash debris
 - Continuous steering (keyboard / on-screen buttons) and swipe lane switching
 - Nitro boost with FOV expansion, x2 score and a NOS meter refilled by canister pickups
@@ -23,6 +27,7 @@ An endless arcade sky-track racer built with [Three.js](https://threejs.org/), V
 | Nitro | `↑` / `W` / `Space` / `Shift` | NOS button, or swipe up |
 | Brake | `↓` / `S` | — |
 | Pause / mute | `P` / `M` | top-right buttons |
+| Choose world (menu) | `←` `→` or `1`–`4` | tap a world card |
 
 ## Development
 
