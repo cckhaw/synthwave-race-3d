@@ -1,15 +1,16 @@
 # Synthwave Racer 3D
 
-An endless low-poly neon highway racer built with [Three.js](https://threejs.org/), Vite and a fully procedural Web Audio soundtrack — no image or audio assets at all.
+An endless arcade sky-track racer built with [Three.js](https://threejs.org/), Vite and a fully procedural Web Audio soundtrack — no image or audio assets at all.
 
 **Play:** https://synthwave-race-3d.vercel.app
 
 ## Features
 
-- Neon grid highway, wireframe mountains, striped synthwave sun, fog and bloom
-- Exhaust and velocity-streak particles that stretch with speed
+- Daylight stunt track above the ocean: striped ramp, red/white barriers, arches, islands and clouds
+- The track ramps and sweeps left/right (vertex-shader bend) for a rollercoaster feel
+- Glossy cars with environment reflections, blue nitro flames, wind streaks and crash debris
 - Continuous steering (keyboard / on-screen buttons) and swipe lane switching
-- Turbo boost with FOV expansion, x2 score and an energy meter refilled by orbs
+- Nitro boost with FOV expansion, x2 score and a NOS meter refilled by canister pickups
 - Traffic that always leaves a reachable gap, speed-based score multiplier
 - Procedural synth music, engine hum, boost, pickup and crash sounds
 - High score persisted in `localStorage`
@@ -19,7 +20,7 @@ An endless low-poly neon highway racer built with [Three.js](https://threejs.org
 | Action | Keyboard | Touch |
 | --- | --- | --- |
 | Steer | `←` `→` / `A` `D` | hold ◀ ▶, or swipe to change lane |
-| Turbo | `↑` / `W` / `Space` / `Shift` | TURBO button, or swipe up |
+| Nitro | `↑` / `W` / `Space` / `Shift` | NOS button, or swipe up |
 | Brake | `↓` / `S` | — |
 | Pause / mute | `P` / `M` | top-right buttons |
 

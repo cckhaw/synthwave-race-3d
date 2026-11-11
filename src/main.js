@@ -8,14 +8,14 @@ import './style.css';
 import { AudioEngine } from './audio.js';
 import { Input } from './input.js';
 import { createWorld, LANES, ROAD_HALF_WIDTH } from './world.js';
-import { makeCar, makeTruck, makeOrb } from './vehicles.js';
+import { makeCar, makeTruck, makeNitro } from './vehicles.js';
 import { Sparks, SpeedLines } from './particles.js';
 
 // ------------------------------------------------------------------ tuning
 const BASE_SPEED = 45; // world units / second
 const MAX_EXTRA_SPEED = 60;
 const TRAFFIC_SPEED = 14;
-const SPAWN_Z = -300;
+const SPAWN_Z = -430;
 const STEER_SPEED = 15;
 const BOOST_FACTOR = 1.65;
 const BOOST_DRAIN = 1 / 3.2; // energy per second while boosting
@@ -24,7 +24,15 @@ const BOOST_MIN = 0.3;
 const FOV_NORMAL = 64;
 const FOV_BOOST = 96;
 const STORAGE_KEY = 'synthwave-racer-3d:best';
-const TRAFFIC_COLORS = [0xff2d95, 0xffe45e, 0xff7a1a, 0xb026ff, 0x39ff88];
+const TRAFFIC = [
+  [0x1fbf4a, 0xffffff],
+  [0x12b5c9, 0xffd23f],
+  [0xffc91a, 0x1b1b1f],
+  [0x7a3cff, 0xffd23f],
+  [0xf23a2a, 0xffffff],
+  [0xf4f6f8, 0x1668ff],
+  [0xff7a1a, 0x1b1b1f],
+];
 
 const $ = (id) => document.getElementById(id);
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
@@ -37,13 +45,13 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPrefer
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, coarse ? 1.5 : 2));
 
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(FOV_NORMAL, 1, 0.1, 1500);
+const camera = new THREE.PerspectiveCamera(FOV_NORMAL, 1, 0.5, 2600);
 
 const world = createWorld(scene, renderer);
 const sparks = new Sparks(scene);
 const speedLines = new SpeedLines(scene);
 
-const player = makeCar(0x00f0ff, { spoiler: true });
+const player = makeCar(0xff1f8f, { wing: true, accent: 0x1b1b1f, nitro: true });
 scene.add(player);
 
 const composer = new EffectComposer(
@@ -51,7 +59,7 @@ const composer = new EffectComposer(
   new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: coarse ? 0 : 4 }),
 );
 composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.85, 0.55, 0.2);
+const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.5, 0.5, 1.0);
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
 
@@ -81,7 +89,7 @@ const ui = {
   best: $('best'),
   speed: $('speed'),
   mult: $('multiplier'),
-  boostFill: $('boost-fill'),
+  boost: $('btn-boost'),
   start: $('overlay-start'),
   pause: $('overlay-pause'),
   over: $('overlay-over'),
@@ -134,6 +142,7 @@ const game = {
 const obstacles = [];
 const pickups = [];
 let useTouchUi = coarse;
+document.body.classList.toggle('touch', coarse);
 
 ui.best.textContent = ui.bestStart.textContent = fmt(game.best);
 
@@ -177,6 +186,7 @@ function startGame() {
   ui.hud.classList.remove('hidden');
   ui.btnPause.classList.remove('hidden');
   ui.touch.classList.toggle('hidden', !useTouchUi);
+  ui.boost.classList.remove('hidden');
 }
 
 function setPaused(paused) {
@@ -200,7 +210,7 @@ function crash(obstacle) {
   player.visible = false;
   audio.stopEngine();
   audio.crash();
-  const palette = [new THREE.Color(0x00f0ff), new THREE.Color(0xff2d95), new THREE.Color(0xffe45e), new THREE.Color(0xffffff)];
+  const palette = [new THREE.Color(2.4, 1.1, 0.2), new THREE.Color(2.2, 0.4, 0.1), new THREE.Color(0xfff3c4), new THREE.Color(0x2a2a30), new THREE.Color(0xff1f8f)];
   sparks.burst(player.position.x, 0.6, -1, palette, 260);
   sparks.burst(obstacle.position.x, 0.8, obstacle.position.z + obstacle.userData.half.l, palette, 80);
   if (navigator.vibrate) navigator.vibrate(180);
@@ -216,6 +226,7 @@ function showGameOver() {
   ui.newBest.classList.toggle('hidden', !(game.score > game.bestAtStart && game.score > 0));
   ui.over.classList.remove('hidden');
   ui.touch.classList.add('hidden');
+  ui.boost.classList.add('hidden');
   ui.btnPause.classList.add('hidden');
 }
 
@@ -231,8 +242,8 @@ function spawnRow() {
   const blocked = candidates.slice(0, 1 + Math.floor(Math.random() * maxBlocked));
 
   for (const lane of blocked) {
-    const color = TRAFFIC_COLORS[Math.floor(Math.random() * TRAFFIC_COLORS.length)];
-    const vehicle = Math.random() < 0.22 ? makeTruck(color) : makeCar(color);
+    const [color, accent] = TRAFFIC[Math.floor(Math.random() * TRAFFIC.length)];
+    const vehicle = Math.random() < 0.2 ? makeTruck(color) : makeCar(color, { accent, wing: Math.random() < 0.4 });
     vehicle.position.set(LANES[lane], 0, SPAWN_Z - Math.random() * 8);
     scene.add(vehicle);
     obstacles.push(vehicle);
@@ -240,7 +251,7 @@ function spawnRow() {
 
   if (Math.random() < 0.38) {
     const free = LANES.map((_, i) => i).filter((i) => !blocked.includes(i));
-    const orb = makeOrb();
+    const orb = makeNitro();
     orb.position.set(LANES[free[Math.floor(Math.random() * free.length)]], 0, SPAWN_Z - 22);
     scene.add(orb);
     pickups.push(orb);
@@ -252,15 +263,15 @@ function spawnRow() {
 function overlaps(entity, shrink) {
   const half = entity.userData.half;
   return (
-    Math.abs(entity.position.x - player.position.x) < (0.85 + half.w) * shrink &&
-    Math.abs(entity.position.z - player.position.z) < (1.95 + half.l) * shrink
+    Math.abs(entity.position.x - player.position.x) < (0.9 + half.w) * shrink &&
+    Math.abs(entity.position.z - player.position.z) < (2.05 + half.l) * shrink
   );
 }
 
 // ------------------------------------------------------------------ update
-const exhaustNormal = new THREE.Color(0xff2d95);
-const exhaustBoost = new THREE.Color(0x40e0ff);
-const exhaustHot = new THREE.Color(0xffe45e);
+const exhaustNormal = new THREE.Color(0.9, 0.95, 1.0);
+const exhaustBoost = new THREE.Color(0.1, 0.55, 2.2);
+const exhaustHot = new THREE.Color(0.8, 1.4, 2.4);
 
 function updatePlaying(dt) {
   game.time += dt;
@@ -340,7 +351,7 @@ function updatePlaying(dt) {
     const p = pickups[i];
     p.position.z += game.speed * dt;
     p.userData.core.rotation.y += dt * 3;
-    p.userData.core.position.y = 1.1 + Math.sin(game.time * 4 + i) * 0.15;
+    p.userData.core.position.y = 1.25 + Math.sin(game.time * 4 + i) * 0.15;
     if (overlaps(p, 1.1)) {
       game.energy = Math.min(1, game.energy + 0.3);
       game.score += 150 * mult;
@@ -359,13 +370,13 @@ function updatePlaying(dt) {
   // --- exhaust trail ---
   game.exhaustTimer -= dt;
   if (game.exhaustTimer <= 0) {
-    game.exhaustTimer = game.boosting ? 0.008 : 0.022;
+    game.exhaustTimer = game.boosting ? 0.008 : 0.05;
     const color = game.boosting ? (Math.random() < 0.3 ? exhaustHot : exhaustBoost) : exhaustNormal;
-    for (const side of [-0.6, 0.6]) {
+    for (const side of [-0.42, 0.42]) {
       sparks.emit(
         player.position.x + side + (Math.random() - 0.5) * 0.15,
-        0.45 + Math.random() * 0.1,
-        2.0,
+        0.3 + Math.random() * 0.08,
+        2.4 + game.boostBlend * 1.6,
         (Math.random() - 0.5) * 1.2,
         Math.random() * 0.8,
         game.speed * (game.boosting ? 0.5 : 0.3),
@@ -425,8 +436,9 @@ function updateHud() {
   ui.speed.textContent = Math.round(game.speed * 3);
   ui.mult.textContent = `x${mult.toFixed(1)}`;
   ui.mult.classList.toggle('boosting', game.boosting);
-  ui.boostFill.style.width = `${Math.round(game.energy * 100)}%`;
-  ui.boostFill.classList.toggle('ready', !game.boosting && game.energy >= BOOST_MIN);
+  ui.boost.style.setProperty('--energy', Math.round(game.energy * 100));
+  ui.boost.classList.toggle('ready', !game.boosting && game.energy >= BOOST_MIN);
+  ui.boost.classList.toggle('active', game.boosting);
 }
 
 let last = performance.now();
@@ -441,6 +453,12 @@ function frame(now) {
   else if (game.state === 'menu') {
     game.speed = damp(game.speed, 34, 1, dt);
     player.position.x = Math.sin(now * 0.0006) * 3;
+  }
+
+  const flameLen = 0.55 + game.boostBlend * 2.6;
+  for (const flame of player.userData.flames) {
+    const flicker = 0.85 + Math.random() * 0.3;
+    flame.scale.set(1 + game.boostBlend * 0.5, 1 + game.boostBlend * 0.5, flameLen * flicker);
   }
 
   world.update(dt, game.speed);
@@ -480,6 +498,7 @@ window.addEventListener(
   'touchstart',
   () => {
     useTouchUi = true;
+    document.body.classList.add('touch');
     if (game.state === 'playing') ui.touch.classList.remove('hidden');
   },
   { passive: true },
